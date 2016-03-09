@@ -148,6 +148,94 @@ namespace Totem
 		}
 
 		//
+		// Equality (in)
+		//
+
+		[DebuggerHidden, DebuggerStepThrough, DebuggerNonUserCode]
+		public static Expect<T> IsIn<T>(this Expect<T> expect, IEnumerable<T> values, Text issue = null)
+		{
+			return expect.IsTrue(
+				t => Check.True(t).IsIn(values),
+				issue ?? "Value not found",
+				expected: "in " + values.ToTextSeparatedBy(", ").InBrackets());
+		}
+
+		[DebuggerHidden, DebuggerStepThrough, DebuggerNonUserCode]
+		public static Expect<T> IsIn<T>(this Expect<T> expect, IEnumerable<T> values, IEqualityComparer<T> comparer, Text issue = null)
+		{
+			return expect.IsTrue(
+				t => Check.True(t).IsIn(values),
+				issue ?? "Value not found",
+				expected: "in " + values.ToTextSeparatedBy(", ").InBrackets() + Text.Of(" (comparer = {0})", comparer));
+		}
+
+		[DebuggerHidden, DebuggerStepThrough, DebuggerNonUserCode]
+		public static Expect<T> IsIn<T>(this Expect<T> expect, params T[] values)
+		{
+			return expect.IsIn(values as IEnumerable<T>);
+		}
+
+		[DebuggerHidden, DebuggerStepThrough, DebuggerNonUserCode]
+		public static Expect<T> IsIn<T>(this Expect<T> expect, Text issue, params T[] values)
+		{
+			return expect.IsIn(values as IEnumerable<T>, issue);
+		}
+
+		[DebuggerHidden, DebuggerStepThrough, DebuggerNonUserCode]
+		public static Expect<T> IsIn<T>(this Expect<T> expect, IEqualityComparer<T> comparer, params T[] values)
+		{
+			return expect.IsIn(values as IEnumerable<T>, comparer);
+		}
+
+		[DebuggerHidden, DebuggerStepThrough, DebuggerNonUserCode]
+		public static Expect<T> IsIn<T>(this Expect<T> expect, IEqualityComparer<T> comparer, Text issue, params T[] values)
+		{
+			return expect.IsIn(values as IEnumerable<T>, comparer, issue);
+		}
+
+		[DebuggerHidden, DebuggerStepThrough, DebuggerNonUserCode]
+		public static Expect<T> IsNotIn<T>(this Expect<T> expect, IEnumerable<T> values, Text issue = null)
+		{
+			return expect.IsTrue(
+				t => Check.True(t).IsNotIn(values),
+				issue ?? "Value found",
+				expected: "not in " + values.ToTextSeparatedBy(", ").InBrackets());
+		}
+
+		[DebuggerHidden, DebuggerStepThrough, DebuggerNonUserCode]
+		public static Expect<T> IsNotIn<T>(this Expect<T> expect, IEnumerable<T> values, IEqualityComparer<T> comparer, Text issue = null)
+		{
+			return expect.IsTrue(
+				t => Check.True(t).IsNotIn(values),
+				issue ?? "Value found",
+				expected: "not in " + values.ToTextSeparatedBy(", ").InBrackets() + Text.Of(" (comparer = {0})", comparer));
+		}
+
+		[DebuggerHidden, DebuggerStepThrough, DebuggerNonUserCode]
+		public static Expect<T> IsNotIn<T>(this Expect<T> expect, params T[] values)
+		{
+			return expect.IsNotIn(values as IEnumerable<T>);
+		}
+
+		[DebuggerHidden, DebuggerStepThrough, DebuggerNonUserCode]
+		public static Expect<T> IsNotIn<T>(this Expect<T> expect, Text issue, params T[] values)
+		{
+			return expect.IsNotIn(values as IEnumerable<T>, issue);
+		}
+
+		[DebuggerHidden, DebuggerStepThrough, DebuggerNonUserCode]
+		public static Expect<T> IsNotIn<T>(this Expect<T> expect, IEqualityComparer<T> comparer, params T[] values)
+		{
+			return expect.IsNotIn(values as IEnumerable<T>, comparer);
+		}
+
+		[DebuggerHidden, DebuggerStepThrough, DebuggerNonUserCode]
+		public static Expect<T> IsNotIn<T>(this Expect<T> expect, IEqualityComparer<T> comparer, Text issue, params T[] values)
+		{
+			return expect.IsNotIn(values as IEnumerable<T>, comparer, issue);
+		}
+
+		//
 		// String
 		//
 
@@ -188,6 +276,40 @@ namespace Totem
 		}
 
 		//
+		// Int32
+		//
+
+		[DebuggerHidden, DebuggerStepThrough, DebuggerNonUserCode]
+		public static Expect<int> IsNegative(this Expect<int> expect, Text issue = null)
+		{
+			return expect.IsTrue(t => Check.True(t).IsNegative(), issue ?? "Integer out of range", expected: "negative");
+		}
+
+		[DebuggerHidden, DebuggerStepThrough, DebuggerNonUserCode]
+		public static Expect<int> Is0OrNegative(this Expect<int> expect, Text issue = null)
+		{
+			return expect.IsTrue(t => Check.True(t).Is0OrNegative(), issue ?? "Integer out of range", expected: "0 or negative");
+		}
+
+		[DebuggerHidden, DebuggerStepThrough, DebuggerNonUserCode]
+		public static Expect<int> Is0(this Expect<int> expect, Text issue = null)
+		{
+			return expect.IsTrue(t => Check.True(t).Is0(), issue ?? "Integer out of range", expected: "0");
+		}
+
+		[DebuggerHidden, DebuggerStepThrough, DebuggerNonUserCode]
+		public static Expect<int> Is0OrPositive(this Expect<int> expect, Text issue = null)
+		{
+			return expect.IsTrue(t => Check.True(t).Is0OrPositive(), issue ?? "Integer out of range", expected: "0 or positive");
+		}
+
+		[DebuggerHidden, DebuggerStepThrough, DebuggerNonUserCode]
+		public static Expect<int> IsPositive(this Expect<int> expect, Text issue = null)
+		{
+			return expect.IsFalse(t => Check.True(t).IsPositive(), issue ?? "Integer out of range", expected: "positive");
+		}
+
+		//
 		// Types
 		//
 
@@ -210,13 +332,37 @@ namespace Totem
 		[DebuggerHidden, DebuggerStepThrough, DebuggerNonUserCode]
 		public static Expect<Many<T>> Has<T>(this Expect<Many<T>> expect, int count, Text issue = null)
 		{
-			return expect.IsTrue(t => Check.True(t).Has(count), issue ?? "Value has the wrong number of items", Text.Count(count, "item"), t => Text.Count(t.Count, "item"));
+			return expect.IsTrue(
+				t => Check.True(t).Has(count),
+				issue ?? "Wrong number of items",
+				expected: Text.Count(count, "item"),
+				received: t => Text.Count(t.Count, "item"));
+		}
+
+		[DebuggerHidden, DebuggerStepThrough, DebuggerNonUserCode]
+		public static Expect<Many<T>> HasAtLeast<T>(this Expect<Many<T>> expect, int count, Text issue = null)
+		{
+			return expect.IsTrue(
+				t => Check.True(t).HasAtLeast(count),
+				issue ?? "Too few items",
+				expected: Text.Count(count, "item"),
+				received: t => Text.Count(t.Count, "item"));
+		}
+
+		[DebuggerHidden, DebuggerStepThrough, DebuggerNonUserCode]
+		public static Expect<Many<T>> HasAtMost<T>(this Expect<Many<T>> expect, int count, Text issue = null)
+		{
+			return expect.IsTrue(
+				t => Check.True(t).HasAtMost(count),
+				issue ?? "Too many items",
+				expected: Text.Count(count, "item"),
+				received: t => Text.Count(t.Count, "item"));
 		}
 
 		[DebuggerHidden, DebuggerStepThrough, DebuggerNonUserCode]
 		public static Expect<Many<T>> Has0<T>(this Expect<Many<T>> expect, Text issue = null)
 		{
-			return expect.Has(0, issue);
+			return expect.Has(0, issue ?? "No items");
 		}
 
 		[DebuggerHidden, DebuggerStepThrough, DebuggerNonUserCode]
@@ -243,6 +389,56 @@ namespace Totem
 			}
 
 			return expect;
+		}
+
+		[DebuggerHidden, DebuggerStepThrough, DebuggerNonUserCode]
+		public static Expect<Many<T>> Has3<T>(this Expect<Many<T>> expect, Action<T, T, T> expectItems = null, Text issue = null)
+		{
+			expect = expect.Has(3, issue);
+
+			if(expectItems != null)
+			{
+				expectItems(expect.Target[0], expect.Target[1], expect.Target[2]);
+			}
+
+			return expect;
+		}
+
+		[DebuggerHidden, DebuggerStepThrough, DebuggerNonUserCode]
+		public static Expect<Many<T>> Has4<T>(this Expect<Many<T>> expect, Action<T, T, T, T> expectItems = null, Text issue = null)
+		{
+			expect = expect.Has(4, issue);
+
+			if(expectItems != null)
+			{
+				expectItems(expect.Target[0], expect.Target[1], expect.Target[2], expect.Target[3]);
+			}
+
+			return expect;
+		}
+
+		[DebuggerHidden, DebuggerStepThrough, DebuggerNonUserCode]
+		public static Expect<Many<T>> Has1OrMore<T>(this Expect<Many<T>> expect, Text issue = null)
+		{
+			return expect.IsTrue(t => Check.True(t).Has1OrMore(), issue ?? "Too few items", expected: "1 or more items");
+		}
+
+		[DebuggerHidden, DebuggerStepThrough, DebuggerNonUserCode]
+		public static Expect<Many<T>> Has2OrMore<T>(this Expect<Many<T>> expect, Text issue = null)
+		{
+			return expect.IsTrue(t => Check.True(t).Has2OrMore(), issue ?? "Too few items", expected: "2 or more items");
+		}
+
+		[DebuggerHidden, DebuggerStepThrough, DebuggerNonUserCode]
+		public static Expect<Many<T>> Has3OrMore<T>(this Expect<Many<T>> expect, Text issue = null)
+		{
+			return expect.IsTrue(t => Check.True(t).Has3OrMore(), issue ?? "Too few items", expected: "3 or more items");
+		}
+
+		[DebuggerHidden, DebuggerStepThrough, DebuggerNonUserCode]
+		public static Expect<Many<T>> Has4OrMore<T>(this Expect<Many<T>> expect, Text issue = null)
+		{
+			return expect.IsTrue(t => Check.True(t).Has4OrMore(), issue ?? "Too few items", expected: "4 or more items");
 		}
 
 		//
