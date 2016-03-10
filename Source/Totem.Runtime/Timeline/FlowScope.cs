@@ -10,13 +10,15 @@ namespace Totem.Runtime.Timeline
 	/// <summary>
 	/// The scope of a flow's activity on the timeline
 	/// </summary>
-	public sealed class FlowScope : PushScope, IFlowScope
+	public sealed class FlowScope : Connection, IFlowScope
 	{
 		private readonly TaskCompletionSource<Flow> _taskCompletionSource = new TaskCompletionSource<Flow>();
 		private readonly ILifetimeScope _lifetime;
 		private readonly IFlowDb _db;
 		private TimelineRoute _route;
     private Flow _instance;
+		private FlowQueue _queue;
+		private Task _pushQueueTask;
 
 		public FlowScope(ILifetimeScope lifetime, IFlowDb db, FlowType type, TimelineRoute route)
 		{
@@ -40,14 +42,58 @@ namespace Totem.Runtime.Timeline
 				: _db.TryReadInstance(Key, out _instance);
 		}
 
-		protected override void Push()
+		protected override void Open()
+		{
+			Expect(_instance).IsNotNull("Routing failed - cannot connect scope");
+
+			_queue = new FlowQueue();
+			_pushQueueTask = PushQueue();
+		}
+
+		protected override void Close()
+		{
+			base.Close();
+
+			_instance = null;
+			_queue = null;
+			_pushQueueTask = null;
+    }
+
+		public void Push(TimelinePoint point)
+		{
+			if(PushingQueue)
+			{
+				_queue.Enqueue(point);
+			}
+			else
+			{
+				Log.Warning(
+					"[timeline] Cannot push to scope in phase {Phase} - ignoring {Point:l}",
+					State.Phase,
+					point);
+			}
+		}
+
+		private bool PushingQueue => State.IsConnecting || State.IsConnected;
+
+		private async Task PushQueue()
+		{
+			while(PushingQueue)
+			{
+				var point = await _queue.Dequeue();
+
+				if(PushingQueue && point.Position > _instance.Checkpoint)
+				{
+					await PushFromQueue(point);
+				}
+			}
+		}
+
+		private async Task PushFromQueue(TimelinePoint point)
 		{
 			try
 			{
-				if(PointIsPastCheckpoint)
-				{
-          MakeCall();
-				}
+				await MakeCall(point);
 			}
 			catch(Exception error)
 			{
@@ -56,48 +102,39 @@ namespace Totem.Runtime.Timeline
 					throw;
 				}
 
-				WriteError(error);
+				WriteError(point, error);
 			}
 		}
 
-    private bool PointIsPastCheckpoint => Point.Position > _instance.Checkpoint;
-
-    private void MakeCall()
-    {
-      MakeCallAsync().Wait(State.CancellationToken);
-    }
-
-		private async Task MakeCallAsync()
+		private async Task MakeCall(TimelinePoint point)
 		{
+			Log.Verbose("[timeline] {Position:l} => {Flow:l}", point.Position, Key);
+
 			using(var callScope = _lifetime.BeginCallScope())
 			{
-        var call = CreateCall(callScope);
+        var call = CreateCall(point, callScope);
 
         await _instance.MakeCall(call);
 
         _db.WriteCall(call);
 
-        if(CheckDone())
-        {
-          Log.Verbose("[timeline] {Position:l} /> {Flow:l}", Point.Position, Key);
-        }
-        else
-        {
-          Log.Verbose("[timeline] {Position:l} => {Flow:l}", Point.Position, Key);
-        }
-      }
+				if(_instance.Done)
+				{
+					CompleteTask();
+				}
+			}
 		}
 
-		private WhenCall CreateCall(ILifetimeScope scope)
+		private WhenCall CreateCall(TimelinePoint point, ILifetimeScope scope)
 		{
       var dependencies = scope.Resolve<IDependencySource>();
-      var principal = _db.ReadPrincipal(Point);
+      var principal = _db.ReadPrincipal(point);
 
       if(_instance.Type.IsTopic)
       {
         return new TopicWhenCall(
           (Topic) _instance,
-          Point,
+					point,
           dependencies,
           principal,
           State.CancellationToken);
@@ -105,31 +142,19 @@ namespace Totem.Runtime.Timeline
 
       return new WhenCall(
 				_instance,
-				Point,
+				point,
         dependencies,
         principal,
 				State.CancellationToken);
 		}
 
-		private bool CheckDone()
-		{
-			if(_instance.Done)
-			{
-				CompleteTask();
-
-				return true;
-			}
-
-			return false;
-		}
-
-		private void WriteError(Exception error)
+		private void WriteError(TimelinePoint point, Exception error)
 		{
 			Log.Error(error, "[timeline] Flow {Flow:l} stopped", _instance);
 
 			try
 			{
-				_db.WriteError(Key, Point, error);
+				_db.WriteError(Key, point, error);
 			}
 			finally
 			{
